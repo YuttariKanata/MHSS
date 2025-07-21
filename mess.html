@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>MHSS Calculator</title>
+</head>
+<body>
+    <h1>Multiple Harmonic Star Sums Calculator</h1>
+    <div id="inputs">
+        <!-- 13個の入力欄を作成 -->
+        <label for="input0">s1 :</label>
+        <input type="number" id="input0" min="0" value="1"><br>
+        <label for="input0">s2 :</label>
+        <input type="number" id="input1" min="0" value="2"><br>
+        <label for="input0">s3 :</label>
+        <input type="number" id="input2" min="0" value="0"><br>
+        <label for="input0">s4 :</label>
+        <input type="number" id="input3" min="0" value="0"><br>
+        <label for="input0">s5 :</label>
+        <input type="number" id="input4" min="0" value="0"><br>
+        <label for="input0">s6 :</label>
+        <input type="number" id="input5" min="0" value="0"><br>
+        <label for="input0">s7 :</label>
+        <input type="number" id="input6" min="0" value="0"><br>
+        <label for="input0">s8 :</label>
+        <input type="number" id="input7" min="0" value="0"><br>
+        <label for="input0">s9 :</label>
+        <input type="number" id="input8" min="0" value="0"><br>
+        <label for="input0">s10:</label>
+        <input type="number" id="input9" min="0" value="0"><br>
+        <label for="input0">a  :</label>
+        <input type="number" id="input10" min="0" value="10"><br>
+        <label for="input0">p  :</label>
+        <input type="number" id="input11" min="0" value="0"><br>
+        <label for="input0">precision:</label>
+        <input type="number" id="input12" min="20" value="200"><br>
+    </div>
+
+    <div id="result"></div>
+    <button onclick="pressBtn()">Calculate</button>
+    <p>大きすぎる値を入れるとメモリ不足で止まる可能性があるので、その時はリロードしてください<br>
+    precisionはbit数です<br>
+    作者はメモリ管理をよく把握してないです。怖いので適度にリロードしましょう。<br>
+    それでも怖いのでブラウザを閉じましょう。<br>
+    それでも怖い?ならpcを再起動しましょう<br>
+    aは0にしておかないと計算結果を保証できません。というより多分間違った答えが出ます<br>
+    メモリが足りない？もっと計算したい？作者に怒鳴りつけましょう<br>
+    Twitter(X)のアカウント:<a href="https://twitter.com/eyV6a3AdWcAoZhY">@eyV6a3AdWcAoZhY</a><br>
+    元のC言語で書かれたプログラムが欲しい？作者に怒鳴りつけましょう。<br>
+    それか、GitHubでもいいかもしれません<br>
+    GitHub:<a href="https://github.com/YuttariKanata">https://github.com/YuttariKanata</a><br>
+    どうやってこんなに高速に計算してるか分からない？作者に怒鳴りつけましょう。<br>
+    それか、Mathlogで怒鳴りつけてもいいかもしれませんね<br>
+    作者のMathlog:<a href="https://mathlog.info/users/lXPsXdHEzQViJHdnC7jkXrwtwM33">https://mathlog.info/users/lXPsXdHEzQViJHdnC7jkXrwtwM33</a></p>
+
+    <script src="MHSS.js"></script>
+    <script>
+        var Mzeta2 = Module.cwrap("MHSS", "number", ["number", "number"]);
+
+        function pressBtn(){
+            var input_array = new Int32Array(13);
+
+            // 各入力欄の値を取得し、Int32Arrayに設定
+            for (var i = 0; i < 13; i++) {
+                var inputValue = parseInt(document.getElementById("input" + i).value);
+                input_array[i] = inputValue;
+            }
+
+            var input_len = input_array.length;
+            console.log(input_len);
+            var output_len = Math.round(input_array[12]* 0.301029995664)+10;
+            console.log(output_len);
+            var bytes_per_element = input_array.BYTES_PER_ELEMENT;
+            
+            var input_ptr = Module._malloc(input_len * bytes_per_element);
+            var output_ptr = Module._malloc(output_len * bytes_per_element);
+            
+            Module.HEAP32.set(input_array, input_ptr / bytes_per_element);
+            var expis = Mzeta2(input_ptr, output_ptr);
+            var output_array = new Int32Array(Module.HEAP32.buffer, output_ptr, output_len);
+            
+            console.log("The starting array was:", input_array);
+            console.log("The result read is:", output_array);
+            console.log("The exp is:", expis);
+
+            var resultDiv = document.getElementById("result");
+            
+            var answerString;
+            var formattedString;
+            if(Number(expis) < 0){
+                var answer_array = new Int32Array(output_array.length - expis);
+                var add_array = new Int32Array(-expis);
+                answer_array.set(add_array,0);
+                answer_array.set(output_array,add_array.length);
+
+                answerString = answer_array.join('');
+                formattedString = '0.' + answerString;
+
+                resultDiv.textContent = "Result: " + formattedString;
+            }else if(Number(expis) == 0){
+                answerString = output_array.join('');
+                formattedString = '0.' + answerString;
+
+                resultDiv.textContent = "FResult: " + formattedString;
+            }else if(Number(expis) > 0){
+                var substring1 = output_array.slice(0, expis);
+                var substring2 = output_array.slice(expis);
+                answerString = substring1.join('') + '.' +substring2.join('');
+
+                formattedString = answerString;
+
+                resultDiv.textContent = "Result: " + formattedString;
+            }
+            
+            Module._free(input_ptr);
+            Module._free(output_ptr);
+        }
+    </script>
+</body>
+</html>
