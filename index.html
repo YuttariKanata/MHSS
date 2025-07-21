@@ -29,11 +29,11 @@
         <label for="input0">s10:</label>
         <input type="number" id="input9" min="0" value="0"><br>
         <label for="input0">a  :</label>
-        <input type="number" id="input10" min="0" value="10"><br>
+        <input type="number" id="input10" min="0" value="3"><br>
         <label for="input0">p  :</label>
-        <input type="number" id="input11" min="0" value="0"><br>
+        <input type="number" id="input11" min="1" value="7"><br>
         <label for="input0">precision:</label>
-        <input type="number" id="input12" min="20" value="200"><br>
+        <input type="number" id="input12" min="20" value="256"><br>
     </div>
 
     <div id="result"></div>
@@ -66,54 +66,67 @@
                 input_array[i] = inputValue;
             }
 
-            var input_len = input_array.length;
-            console.log(input_len);
-            var output_len = Math.round(input_array[12]* 0.301029995664)+10;
-            console.log(output_len);
-            var bytes_per_element = input_array.BYTES_PER_ELEMENT;
-            
-            var input_ptr = Module._malloc(input_len * bytes_per_element);
-            var output_ptr = Module._malloc(output_len * bytes_per_element);
-            
-            Module.HEAP32.set(input_array, input_ptr / bytes_per_element);
-            var expis = Mzeta2(input_ptr, output_ptr);
-            var output_array = new Int32Array(Module.HEAP32.buffer, output_ptr, output_len);
-            
-            console.log("The starting array was:", input_array);
-            console.log("The result read is:", output_array);
-            console.log("The exp is:", expis);
+            try {
 
-            var resultDiv = document.getElementById("result");
-            
-            var answerString;
-            var formattedString;
-            if(Number(expis) < 0){
-                var answer_array = new Int32Array(output_array.length - expis);
-                var add_array = new Int32Array(-expis);
-                answer_array.set(add_array,0);
-                answer_array.set(output_array,add_array.length);
+                if (input_array[11] <= input_array[10]) {
+                    throw new Error(" p は a より大きくないといけません");
+                }
+                if (input_array[12] < 8) {
+                    throw new Error(" precision は 8 以上でお願いします");
+                }
+                
+                var input_len = input_array.length;
+                console.log(input_len);
+                var output_len = Math.round(input_array[12]* 0.301029995664)+10;
+                console.log(output_len);
+                var bytes_per_element = input_array.BYTES_PER_ELEMENT;
+                
+                var input_ptr = Module._malloc(input_len * bytes_per_element);
+                var output_ptr = Module._malloc(output_len * bytes_per_element);
+                
+                Module.HEAP32.set(input_array, input_ptr / bytes_per_element);
+                var expis = Mzeta2(input_ptr, output_ptr);
+                var output_array = new Int32Array(Module.HEAP32.buffer, output_ptr, output_len);
+                
+                console.log("The starting array was:", input_array);
+                console.log("The result read is:", output_array);
+                console.log("The exp is:", expis);
 
-                answerString = answer_array.join('');
-                formattedString = '0.' + answerString;
+                var resultDiv = document.getElementById("result");
+                
+                var answerString;
+                var formattedString;
+                if(Number(expis) < 0){
+                    var answer_array = new Int32Array(output_array.length - expis);
+                    var add_array = new Int32Array(-expis);
+                    answer_array.set(add_array,0);
+                    answer_array.set(output_array,add_array.length);
 
-                resultDiv.textContent = "Result: " + formattedString;
-            }else if(Number(expis) == 0){
-                answerString = output_array.join('');
-                formattedString = '0.' + answerString;
+                    answerString = answer_array.join('');
+                    formattedString = '0.' + answerString;
 
-                resultDiv.textContent = "FResult: " + formattedString;
-            }else if(Number(expis) > 0){
-                var substring1 = output_array.slice(0, expis);
-                var substring2 = output_array.slice(expis);
-                answerString = substring1.join('') + '.' +substring2.join('');
+                    resultDiv.textContent = "Result: " + formattedString;
+                }else if(Number(expis) == 0){
+                    answerString = output_array.join('');
+                    formattedString = '0.' + answerString;
 
-                formattedString = answerString;
+                    resultDiv.textContent = "FResult: " + formattedString;
+                }else if(Number(expis) > 0){
+                    var substring1 = output_array.slice(0, expis);
+                    var substring2 = output_array.slice(expis);
+                    answerString = substring1.join('') + '.' +substring2.join('');
 
-                resultDiv.textContent = "Result: " + formattedString;
+                    formattedString = answerString;
+
+                    resultDiv.textContent = "Result: " + formattedString;
+                }
+                
+                Module._free(input_ptr);
+                Module._free(output_ptr);
+                
+            } catch (error) {
+                document.getElementById("result").textContent = "エラー: " + error.message;
             }
-            
-            Module._free(input_ptr);
-            Module._free(output_ptr);
         }
     </script>
 </body>
